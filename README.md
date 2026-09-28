@@ -19,6 +19,7 @@ To enable the **optional development text tutor**, an owner must separately auth
 - Simple daily plan based on goal, level, target, completed lessons, and due cards; spaced example review with idempotent grading.
 - Guest practice limit of three saved turns; email/password registration and login; guest activity migration on registration and login; local progress and preference storage; logout, data export, guest clearing, and account deletion.
 - SQLite development schema, provider interface, request reservations, and automated backend tests. The server refuses to start with `APP_ENV=production` until production security and integrations exist.
+- Internal adult-gated matching domain prototype with atomic pair reservations, two acceptances, expiry, cancellation, and blocking. It is not exposed as a human-call feature because RTC and age assurance are absent.
 
 ## Boundaries
 
@@ -32,6 +33,7 @@ The interface is responsive but has not been tested on a browser device in this 
 api/server.mjs                 HTTP API, auth, development persistence
 api/ai.mjs                     Optional text AI provider adapter
 api/learning.mjs               Transparent review schedule and daily plan
+api/matching.mjs               Internal queue and offer state machine (no calling)
 api/content.mjs                Original scenarios and lessons
 api/migrations/001_initial.sql Development SQLite schema
 web/                           Responsive web client

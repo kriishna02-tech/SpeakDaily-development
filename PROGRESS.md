@@ -7,16 +7,18 @@
 - Added local auth, profile, guest progress migration, account deletion, production simulation guard, and backend integration tests.
 - Added heuristic daily plans, example review cards and idempotent grading, data export, and guest record clearing.
 - Added an optional OpenAI text provider adapter with a server-held key, bounded history and output, request-count reservations, and visible outage behavior. Its contract is tested with fake responses only; no paid call has been authorized or executed.
+- Added an internal server-owned matching prototype with adult self-attestation gate, one presence row per account, atomic reservations, mutual acceptance, cancellation, expiry, and blocking. It has no public API or RTC room admission.
 - Documented architecture, requirements, run steps, and test evidence.
 
 ## Remaining / known defects
 
-- No verified live AI call, speech, pronunciation assessment, Flutter clients, human matching/calling, payments, ads, moderation, production auth/database, or store release artifacts.
+- No verified live AI call, speech, pronunciation assessment, Flutter clients, user-facing human matching/calling, payments, ads, moderation, production auth/database, or store release artifacts.
 - Web layout, keyboard/screen-reader behavior, and microphone handling have not been device/browser tested. The cloud browser blocked the local preview URL; there is no microphone capture in the preview.
 - No password reset or email verification. Local session cookies are for a development preview, not a hardened service.
 - Guest quota can be reset by clearing cookies; no server abuse prevention beyond the per-ID counter.
 - AI text request caps count requests, not tokens or money; there is no currency budget, billing measurement, or production abuse protection.
 - Review cards use lesson example recall. They do not demonstrate independent correct usage or resolved recurring mistakes.
+- Matching eligibility uses development-only adult self-attestation. It does not provide release-grade age assurance; there are no actual calls or room credentials.
 - UI `confirm()` for deletion needs a designed accessible confirmation flow before release.
 
 ## Exact next steps

@@ -7,6 +7,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { scenarios, lessons } from './content.mjs';
 import { nextReview, dailyPlan } from './learning.mjs';
 import { createOpenAITextProvider } from './ai.mjs';
+import { createMatching } from './matching.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const webRoot = resolve(root, 'web');
@@ -57,6 +58,8 @@ export function createApp({dataDir=resolve(root,'data'),provider}={}) {
   db.exec(readFileSync(resolve(root,'api/migrations/001_initial.sql'),'utf8'));
   db.exec(readFileSync(resolve(root,'api/migrations/002_review.sql'),'utf8'));
   db.exec(readFileSync(resolve(root,'api/migrations/003_usage.sql'),'utf8'));
+  db.exec(readFileSync(resolve(root,'api/migrations/004_matching.sql'),'utf8'));
+  const matching=createMatching(db);
   const findUser=db.prepare('SELECT u.id,u.email,u.password_hash FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?');
   const reviewFor=db.prepare('SELECT id,lesson_id,due_at,interval_days,repetitions,reviewed_at FROM review_items WHERE owner_kind=? AND owner_id=? AND id=?');
   const moveReviews=(fromKind,fromId,toId)=>{
@@ -254,7 +257,7 @@ export function createApp({dataDir=resolve(root,'data'),provider}={}) {
       res.end(method==='HEAD'?undefined:data);
     } catch(e) { if(e.status) return fail(res,'BAD_REQUEST',e.message,e.status); console.error('request_failed',e.message); return fail(res,'INTERNAL','Something went wrong',500); }
   });
-  return {server,db};
+  return {server,db,matching};
 }
 
 if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)) {

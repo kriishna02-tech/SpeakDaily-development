@@ -10,7 +10,7 @@ Status: **Done** means implemented and backed by the listed tests; **Partial** m
 | AI two-way voice, live transcript, interruption, roles/modes, memory | Partial | Server-side OpenAI text adapter and outage/usage tests; no paid live call or realtime audio yet |
 | Correction and pronunciation accuracy | Partial | Optional AI text feedback schema; no live validation, audio assessment, or recognition uncertainty controls |
 | Lessons and progression | Partial | 20 original prompts/lessons, heuristic daily plan, spaced example review; offline sync, branching missions, games pending |
-| Human eligibility, queue, atomic matching, acceptance | Pending | PostgreSQL transactions, state machine, concurrency tests, age assurance |
+| Human eligibility, queue, atomic matching, acceptance | Partial | Internal SQLite domain prototype and race tests; no public queue, sufficient age assurance, PostgreSQL, or RTC admission |
 | Human calls, reconnect, block/report, consent | Pending | RTC provider, relay, two-device tests, moderation workflows, two-party consent |
 | Ads, subscriptions, rewards, entitlement/cost ledger | Pending | Store/AdMob accounts, backend verification and idempotent event processing |
 | Admin, uploads, security, monitoring, deletion retention | Partial | Dev account export/deletion and guest clearing. Production roles, moderation, backup policy pending |
