@@ -19,7 +19,7 @@ Environment: Linux workspace, Node.js v24.19.0, npm 11.9.0. No Flutter/Dart, And
 | Internal match reservation | No self/double allocation; mutual acceptance; stale cancellation denied | Three-account SQLite domain tests passed | Pass for development domain only |
 | Match expiry and block | Pending offers expire; block releases a shared reservation | Simulated clock tests passed | Pass for development domain only |
 | Responsive UI in actual browsers/devices | Layout, controls, accessibility work | Cloud browser refused local `127.0.0.1` URL (`ERR_BLOCKED_BY_CLIENT`); no device run | Blocked |
-| Flutter Android/iOS/web builds | Build and launch | SDKs unavailable; no Flutter client yet | Blocked |
+| Flutter Android/iOS/web builds | Build and launch | Flutter SDK source/Dart downloaded, but first-run tool command was stopped by automatic approval review due to unexpected cloud metadata endpoint access; no client/build produced | Blocked |
 | AI microphone/streaming/feedback | Natural two-way speech and accurate correction | Provider and audio implementation absent | Not run |
 | Live OpenAI text response | Real response and feedback quality | No owner-authorized key/spend; no paid call | Blocked |
 | Two-account real human call | Mutual acceptance and bidirectional audio | RTC, room admission, and public matching flow absent | Not run |

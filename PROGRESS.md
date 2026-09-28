@@ -19,6 +19,7 @@
 - AI text request caps count requests, not tokens or money; there is no currency budget, billing measurement, or production abuse protection.
 - Review cards use lesson example recall. They do not demonstrate independent correct usage or resolved recurring mistakes.
 - Matching eligibility uses development-only adult self-attestation. It does not provide release-grade age assurance; there are no actual calls or room credentials.
+- Flutter first-run setup was blocked by automatic approval review after an unexpected request to the cloud instance metadata endpoint. No Flutter client or platform build was produced; do not rerun that command through another route without resolving the credential-exposure risk.
 - UI `confirm()` for deletion needs a designed accessible confirmation flow before release.
 
 ## Exact next steps
