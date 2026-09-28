@@ -34,6 +34,9 @@ async function body(req) {
 }
 const valid = (v,max=120) => typeof v==='string' && v.trim().length>0 && v.length<=max;
 const positiveLimit = (value,fallback) => Number.isInteger(Number(value)) && Number(value)>0 && Number(value)<=1000 ? Number(value) : fallback;
+// Reserve 5 cents for every attempted Standard gpt-6-luna text turn, with a
+// $4.50 lifetime app ceiling. No refunds: even failed responses may be billed.
+const AI_CALL_RESERVE_MICRO_USD=50_000, AI_LIFETIME_CAP_MICRO_USD=4_500_000;
 const profileFields = p => p && valid(p.goal,80) && ['A1','A2','B1','B2','C1','C2','unsure'].includes(p.level)
   && ['English','Hindi','Hinglish'].includes(p.language) && typeof p.interests==='string' && p.interests.length<=200
   && Number.isInteger(p.dailyMinutes) && p.dailyMinutes>=5 && p.dailyMinutes<=60;
@@ -59,6 +62,7 @@ export function createApp({dataDir=resolve(root,'data'),provider}={}) {
   db.exec(readFileSync(resolve(root,'api/migrations/002_review.sql'),'utf8'));
   db.exec(readFileSync(resolve(root,'api/migrations/003_usage.sql'),'utf8'));
   db.exec(readFileSync(resolve(root,'api/migrations/004_matching.sql'),'utf8'));
+  db.exec(readFileSync(resolve(root,'api/migrations/005_budget.sql'),'utf8'));
   const matching=createMatching(db);
   const findUser=db.prepare('SELECT u.id,u.email,u.password_hash FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?');
   const reviewFor=db.prepare('SELECT id,lesson_id,due_at,interval_days,repetitions,reviewed_at FROM review_items WHERE owner_kind=? AND owner_id=? AND id=?');
@@ -183,6 +187,8 @@ export function createApp({dataDir=resolve(root,'data'),provider}={}) {
               const personal=db.prepare('SELECT count(*) AS n FROM ai_usage WHERE owner_kind=? AND owner_id=? AND utc_day=? AND provider=?').get(kind,owner,day,ai.mode).n;
               const project=db.prepare('SELECT count(*) AS n FROM ai_usage WHERE utc_day=? AND provider=?').get(day,ai.mode).n;
               if(personal>=userDailyLimit||project>=projectDailyLimit) { db.exec('COMMIT'); return fail(res,'AI_DAILY_LIMIT','Today’s AI text allowance is used. Lessons and review remain available.',429); }
+              const budget=db.prepare('UPDATE ai_project_budget SET reserved_micro_usd=reserved_micro_usd+? WHERE id=1 AND reserved_micro_usd+?<=?').run(AI_CALL_RESERVE_MICRO_USD,AI_CALL_RESERVE_MICRO_USD,AI_LIFETIME_CAP_MICRO_USD);
+              if(budget.changes!==1) { db.exec('COMMIT'); return fail(res,'AI_BUDGET_LIMIT','The AI text budget is used. Lessons and review remain available.',429); }
             }
             db.prepare('INSERT INTO ai_usage(id,owner_kind,owner_id,utc_day,provider,status,created_at) VALUES(?,?,?,?,?,?,?)').run(reservation,kind,owner,day,ai.mode,'reserved',now);
             db.exec('COMMIT');

@@ -124,7 +124,7 @@ test('login merges guest review card with existing account card',async t=>{
 
 test('OpenAI text adapter keeps credentials server-side and rejects incomplete output',async()=>{
   let request;
-  const provider=createOpenAITextProvider({apiKey:'test-secret',model:'configured-model',fetchImpl:async(url,options)=>{
+  const provider=createOpenAITextProvider({apiKey:'test-secret',model:'gpt-6-luna',fetchImpl:async(url,options)=>{
     request={url,options};
     return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify({reply:'Tell me more about your course.',strength:'Clear introduction.',nextStep:'Add your subject.',improvements:[]})}]}]})};
   }});
@@ -134,8 +134,10 @@ test('OpenAI text adapter keeps credentials server-side and rejects incomplete o
   assert.equal(request.options.headers.Authorization,'Bearer test-secret');
   const payload=JSON.parse(request.options.body);
   assert.equal(payload.store,false);assert.equal(payload.text.format.strict,true);assert.equal(payload.input.at(-1).content,'I am a student.');
+  assert.equal(payload.reasoning.effort,'none');assert.equal(payload.max_output_tokens,450);
   assert.ok(!JSON.stringify(result).includes('test-secret'));
-  const bad=createOpenAITextProvider({apiKey:'test-secret',model:'configured-model',fetchImpl:async()=>({ok:true,json:async()=>({status:'incomplete',output:[]})})});
+  assert.throws(()=>createOpenAITextProvider({apiKey:'test-secret',model:'gpt-6-sol'}),/supports only gpt-6-luna/);
+  const bad=createOpenAITextProvider({apiKey:'test-secret',model:'gpt-6-luna',fetchImpl:async()=>({ok:true,json:async()=>({status:'incomplete',output:[]})})});
   await assert.rejects(bad.respond({input:'Hi',scenario:{role:'classmate',title:'College',objective:'Hi'},history:[]}),/did not complete/);
 });
 
@@ -159,6 +161,23 @@ test('provider failure returns visible outage and does not consume an allowance'
   assert.equal(response.status,503);assert.ok(!JSON.stringify(response.body).includes('secret'));
   assert.equal((await a('bootstrap')).body.guestRemaining,3);
   assert.equal(db.prepare('SELECT count(*) AS n FROM ai_usage').get().n,0);
+  assert.equal(db.prepare('SELECT reserved_micro_usd FROM ai_project_budget WHERE id=1').get().reserved_micro_usd,50_000);
+});
+
+test('lifetime app budget reserves before a call and survives account deletion',async t=>{
+  let calls=0;
+  const provider={mode:'openai_text',respond:async()=>{calls++;return {reply:'Hi',feedback:{kind:'ai_text_feedback',strength:'Clear',nextStep:'Continue',improvements:[],notice:'Text only'}}}};
+  const {client,db}=await fixture(t,{provider});
+  db.prepare('UPDATE ai_project_budget SET reserved_micro_usd=? WHERE id=1').run(4_450_000);
+  const a=client(),b=client();
+  await a('auth/register','POST',{email:'budget@example.com',password:'longer-passphrase'});
+  assert.equal((await a('practice','POST',{scenarioId:'college',input:'Hello'})).status,201);
+  assert.equal(db.prepare('SELECT reserved_micro_usd FROM ai_project_budget WHERE id=1').get().reserved_micro_usd,4_500_000);
+  assert.equal((await a('account/delete','POST')).status,200);
+  await b('bootstrap');
+  const response=await b('practice','POST',{scenarioId:'college',input:'Hello'});
+  assert.equal(response.status,429);assert.equal(response.body.error.code,'AI_BUDGET_LIMIT');
+  assert.equal(calls,1);
 });
 
 test('data export includes only the signed-in owner and excludes credentials',async t=>{
@@ -184,6 +203,7 @@ test('existing phase-one database upgrades without losing learning records',asyn
   assert.equal(db.prepare('SELECT input FROM practice WHERE id=?').get('old-turn').input,'Hello');
   assert.equal(db.prepare("SELECT name FROM sqlite_master WHERE name='review_items'").get().name,'review_items');
   assert.equal(db.prepare("SELECT name FROM sqlite_master WHERE name='ai_usage'").get().name,'ai_usage');
+  assert.equal(db.prepare('SELECT reserved_micro_usd FROM ai_project_budget WHERE id=1').get().reserved_micro_usd,0);
 });
 
 test('real text mode enforces configured account and project reservation caps',async t=>{
