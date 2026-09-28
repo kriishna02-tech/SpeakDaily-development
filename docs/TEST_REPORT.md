@@ -4,17 +4,26 @@ Environment: Linux workspace, Node.js v24.19.0, npm 11.9.0. No Flutter/Dart, And
 
 | Check | Expected | Observed | Status |
 |---|---|---|---|
-| `npm run check` | JS syntax and integration tests pass | 4/4 tests pass after migration fix | Pass |
+| `npm run check` | JS syntax and integration tests pass | 19/19 tests pass, including review, provider fake, caps, export, guest clear, old-schema migration, and internal matching races | Pass |
 | Clean local install and HTTP smoke | `npm ci` succeeds; health and web root respond | Offline `npm ci` succeeded; `/api/health` returned development status and `/` returned HTTP 200 | Pass |
 | Guest limit and migration | Three turns, 429 on fourth, activity moves once | Confirmed in test | Pass |
 | Ownership and input checks | Other guest cannot see activity; invalid input rejected | Confirmed in test | Pass |
 | Login duplicate completion | Existing and guest lesson overlap yields one completion | Confirmed in test | Pass |
 | Origin check and logout | Cross-origin POST denied; logout clears session | Confirmed in test | Pass |
 | Production guard | Refuse simulated service | Confirmed in test | Pass |
-| Responsive UI in actual browsers/devices | Layout, controls, accessibility work | No browser/device run available | Blocked |
-| Flutter Android/iOS/web builds | Build and launch | SDKs unavailable; no Flutter client yet | Blocked |
+| Review idempotency and ownership | Duplicate event has one effect; foreign user denied | Confirmed in test | Pass |
+| Concurrent guest allowance | Four simultaneous requests cannot exceed three | Confirmed with delayed provider fake | Pass |
+| OpenAI text contract | Key remains server-side; strict schema requested; failure visible | Verified with injected fake response, no live call | Pass for contract only |
+| Lifetime app allowance | Reserve before paid calls; never reset on failed calls or account deletion; stop at $4.50 | Confirmed with injected provider and SQLite migration | Pass for app logic only |
+| Data export and guest deletion | Owner-only export; guest clear isolated | Confirmed in test | Pass |
+| Upgrade from initial schema | Existing practice remains after adding review/usage tables | Confirmed in test | Pass |
+| Internal match reservation | No self/double allocation; mutual acceptance; stale cancellation denied | Three-account SQLite domain tests passed | Pass for development domain only |
+| Match expiry and block | Pending offers expire; block releases a shared reservation | Simulated clock tests passed | Pass for development domain only |
+| Responsive UI in actual browsers/devices | Layout, controls, accessibility work | Cloud browser refused local `127.0.0.1` URL (`ERR_BLOCKED_BY_CLIENT`); no device run | Blocked |
+| Flutter Android/iOS/web builds | Build and launch | Flutter SDK source/Dart downloaded, but first-run tool command was stopped by automatic approval review due to unexpected cloud metadata endpoint access; no client/build produced | Blocked |
 | AI microphone/streaming/feedback | Natural two-way speech and accurate correction | Provider and audio implementation absent | Not run |
-| Two-account real human call | Mutual acceptance and bidirectional audio | RTC/matching absent | Not run |
+| Live OpenAI text response | Real response and feedback quality | User capped spending below $5; secure Codex key setup flow is unavailable in this environment; no paid call | Blocked |
+| Two-account real human call | Mutual acceptance and bidirectional audio | RTC, room admission, and public matching flow absent | Not run |
 | Purchase/ads and store readiness | Verified real sandbox flow | Integrations absent | Not run |
 
 The first test run exposed a guest lesson migration bug (an inserted row reused its primary key and was ignored). The migration now updates ownership within the registration transaction; the test passes. These tests do not establish production security or app store readiness.
